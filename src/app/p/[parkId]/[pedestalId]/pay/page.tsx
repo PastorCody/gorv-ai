@@ -84,19 +84,25 @@ export default function PaymentPage() {
 
       if (method === "simulate") {
         // Simulate payment — auto-confirm
-        await fetch(`/api/sessions/${data.session.id}/confirm`, {
+        const confirmRes = await fetch(`/api/sessions/${data.session.id}/confirm`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ payment_reference: "SIMULATED_PAYMENT" }),
         });
-        router.push(`/session/${data.session.id}`);
+        if (confirmRes.ok) {
+          window.location.href = `/session/${data.session.id}`;
+        } else {
+          setError("Payment simulation failed");
+          setSubmitting(false);
+        }
+        return;
       } else {
         // Open Venmo
         const venmoNote = `GoRV - ${park!.name} Site #${pedestal!.pedestal_number} - ${getDurationLabel(duration)}`;
         const venmoUrl = `https://venmo.com/${park!.venmo_username}?txn=pay&amount=${amountDollars.toFixed(2)}&note=${encodeURIComponent(venmoNote)}`;
         window.open(venmoUrl, "_blank");
         // Redirect to pending session page
-        router.push(`/session/${data.session.id}?pending=true`);
+        window.location.href = `/session/${data.session.id}?pending=true`;
       }
     } catch {
       setError("Something went wrong. Please try again.");
